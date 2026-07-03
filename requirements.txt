@@ -5,3 +5,4 @@ pydantic
 psutil
 docker
 python-dotenv
+pytest
