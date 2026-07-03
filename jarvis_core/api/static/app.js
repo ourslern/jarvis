@@ -42,6 +42,26 @@ Memory: ${data.jarvis.memory_mb} MB`;
 ${data.docker.containers.map(c => `${c.status === 'running' ? '🟢' : '⚪'} ${c.name}`).join('\n')}`;
 }
 
+
+async function refreshModels() {
+  const data = await getJSON('/dashboard/models');
+
+  const installed = data.models
+    .map(m => `○ ${m.name} — ${m.size_gb} GB`)
+    .join('\n');
+
+  const running = data.running?.length
+    ? data.running.map(m => `● ${m.name} — ${(m.size_vram / 1024 / 1024 / 1024).toFixed(2)} GB VRAM`).join('\n')
+    : 'No models currently running.';
+
+  document.getElementById('modelsBox').textContent =
+`Running Models:
+${running}
+
+Installed Models:
+${installed}`;
+}
+
 async function refreshActions() {
   const data = await getJSON('/dashboard/jarvis');
   document.getElementById('actionsBox').textContent =
@@ -83,6 +103,7 @@ async function sendChat() {
   const data = await res.json();
   addMsg('jarvis', data.response || JSON.stringify(data, null, 2));
   refreshActions();
+refreshModels();
 }
 
 document.getElementById('chatInput').addEventListener('keydown', e => {
@@ -96,3 +117,4 @@ refreshActions();
 setInterval(refreshHealth, 10000);
 setInterval(refreshLive, 3000);
 setInterval(refreshActions, 8000);
+setInterval(refreshModels, 10000);
