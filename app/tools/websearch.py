@@ -1,7 +1,9 @@
 import requests
 from app.config import SEARXNG_URL
+from app.tool_registry import tool
 
-def search(query: str, limit: int = 5) -> list[dict]:
+@tool("web.search", "Search the web using local SearXNG.", read_only=True)
+def search(query: str, limit: int = 5):
     r = requests.get(
         f"{SEARXNG_URL}/search",
         params={"q": query, "format": "json"},

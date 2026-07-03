@@ -1,47 +1,80 @@
+import json
+
 from app.ollama import chat
-from app.tools.system import status
-from app.tools.docker_tool import containers
-from app.tools.websearch import search
-from app.tools.filesystem import list_files, read_file, write_file
 from app.memory import remember, recall
+from app.tool_registry import run_tool
+from app.planner import make_plan, run_plan
+
+# Register tools
+import app.tools.system
+import app.tools.docker_tool
+import app.tools.websearch
+import app.tools.filesystem
+
+
+def summarize(user_message: str, tool_data, model: str | None = None) -> dict:
+    context = (
+        "You are Jarvis, Nate's local AI assistant. "
+        "You ran local tools successfully. Summarize the results in plain English. "
+        "Be concise, practical, and mention anything that needs attention.\n\n"
+        f"User request: {user_message}\n"
+        f"Tool data JSON:\n{json.dumps(tool_data, indent=2)}"
+    )
+
+    response = chat("Summarize these tool results for Nate.", model=model, context=context)
+
+    return {
+        "type": "tool_summary",
+        "response": response,
+        "raw": tool_data,
+    }
+
 
 def route(message: str, model: str | None = None) -> dict:
     m = message.lower().strip()
 
-    if "system status" in m or "how is the ai server" in m or "server status" in m:
-        return {"type": "tool", "tool": "system.status", "result": status()}
+    plan = make_plan(message)
+    if plan:
+        results = run_plan(plan)
+        return summarize(message, {"plan": plan, "results": results}, model)
 
     if "docker" in m and ("status" in m or "containers" in m or "running" in m):
-        return {"type": "tool", "tool": "docker.containers", "result": containers()}
+        result = run_tool("docker.containers")
+        return summarize(message, [{"tool": "docker.containers", "result": result}], model)
 
     if m.startswith("search "):
         q = message[7:].strip()
-        return {"type": "tool", "tool": "web.search", "result": search(q)}
+        result = run_tool("web.search", query=q)
+        return summarize(message, [{"tool": "web.search", "result": result}], model)
 
     if "list files" in m:
-        return {"type": "tool", "tool": "filesystem.list", "result": list_files()}
+        result = run_tool("filesystem.list")
+        return summarize(message, [{"tool": "filesystem.list", "result": result}], model)
 
     if m.startswith("read file "):
-        return {"type": "tool", "tool": "filesystem.read", "result": read_file(message[10:].strip())}
+        result = run_tool("filesystem.read", path=message[10:].strip())
+        return summarize(message, [{"tool": "filesystem.read", "result": result}], model)
 
     if m.startswith("write file "):
-        # Format: write file path.txt: content here
         body = message[11:].strip()
         if ":" not in body:
             return {"type": "error", "error": "Use: write file path.txt: content"}
         path, content = body.split(":", 1)
-        return {"type": "tool", "tool": "filesystem.write", "result": write_file(path.strip(), content.strip())}
+        result = run_tool("filesystem.write", path=path.strip(), content=content.strip())
+        return summarize(message, [{"tool": "filesystem.write", "result": result}], model)
 
     if m.startswith("remember "):
         body = message[9:].strip()
         if ":" in body:
             k, v = body.split(":", 1)
-            return {"type": "tool", "tool": "memory.remember", "result": remember(k.strip(), v.strip())}
+            result = remember(k.strip(), v.strip())
+            return summarize(message, [{"tool": "memory.remember", "result": result}], model)
 
     if m.startswith("recall"):
         parts = message.split(maxsplit=1)
         key = parts[1] if len(parts) > 1 else None
-        return {"type": "tool", "tool": "memory.recall", "result": recall(key)}
+        result = recall(key)
+        return summarize(message, [{"tool": "memory.recall", "result": result}], model)
 
     context = f"Known memory: {recall()}"
     return {"type": "llm", "response": chat(message, model=model, context=context)}

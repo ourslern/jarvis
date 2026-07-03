@@ -8,6 +8,7 @@ from app.tools.docker_tool import containers, restart_container
 from app.tools.websearch import search
 from app.tools.filesystem import list_files, read_file, write_file
 from app.config import WORKSPACE
+from app.tool_registry import list_tools, get_action_log
 
 app = FastAPI(title="Jarvis v1")
 
@@ -74,3 +75,12 @@ def memory_get():
 @app.post("/memory")
 def memory_set(req: MemoryRequest):
     return remember(req.key, req.value)
+
+
+@app.get("/tools")
+def tools_endpoint():
+    return {"tools": list_tools()}
+
+@app.get("/actions")
+def actions_endpoint(limit: int = 25):
+    return {"actions": get_action_log(limit)}

@@ -1,8 +1,9 @@
 import psutil
 import shutil
 import subprocess
+from app.tool_registry import tool
 
-def gpu_status() -> dict:
+def gpu_status():
     try:
         r = subprocess.run(
             [
@@ -31,7 +32,8 @@ def gpu_status() -> dict:
     except Exception as e:
         return {"available": False, "error": str(e)}
 
-def status() -> dict:
+@tool("system.status", "Get CPU, RAM, disk, GPU usage, GPU temp, and GPU VRAM.", read_only=True)
+def status():
     disk = shutil.disk_usage("/")
     ram = psutil.virtual_memory()
     return {
