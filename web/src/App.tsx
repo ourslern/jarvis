@@ -5,6 +5,7 @@ import { Models } from "./pages/Models";
 import { Containers } from "./pages/Containers";
 import { Performance } from "./pages/Performance";
 import { Chat } from "./pages/Chat";
+import { Jobs } from "./pages/Jobs";
 import { Settings } from "./pages/Settings";
 import "./App.css";
 
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/containers" element={<Containers />} />
             <Route path="/performance" element={<Performance />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/jobs" element={<Jobs />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

@@ -20,15 +20,15 @@ class ActionRegistry:
             for a in self.actions.values()
         ]
 
-    def run(self, name: str, **kwargs):
-        if name not in self.actions:
-            raise ValueError(f"Unknown action: {name}")
+    def run(self, action_name: str, **kwargs):
+        if action_name not in self.actions:
+            raise ValueError(f"Unknown action: {action_name}")
         started = time.time()
-        action = self.actions[name]
+        action = self.actions[action_name]
         result = action.function(**kwargs)
         self.action_log.append({
             "timestamp": started,
-            "action": name,
+            "action": action_name,
             "args": kwargs,
             "result": result,
             "duration_sec": round(time.time() - started, 3),

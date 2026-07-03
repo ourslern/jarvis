@@ -1,5 +1,13 @@
 import { NavLink } from "react-router-dom";
-import { Home, Bot, Boxes, MessageSquare, LineChart, Settings } from "lucide-react";
+import {
+  Home,
+  Bot,
+  Boxes,
+  MessageSquare,
+  LineChart,
+  Settings,
+  ListChecks,
+} from "lucide-react";
 
 const links = [
   { to: "/", label: "Dashboard", icon: <Home /> },
@@ -7,6 +15,7 @@ const links = [
   { to: "/containers", label: "Containers", icon: <Boxes /> },
   { to: "/performance", label: "Performance", icon: <LineChart /> },
   { to: "/chat", label: "Chat", icon: <MessageSquare /> },
+  { to: "/jobs", label: "Jobs", icon: <ListChecks /> },
   { to: "/settings", label: "Settings", icon: <Settings /> },
 ];
 
@@ -18,7 +27,13 @@ export function Sidebar() {
 
       <nav>
         {links.map((link) => (
-          <NavLink key={link.to} to={link.to} className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+          <NavLink
+            key={link.to}
+            to={link.to}
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
             {link.icon}
             <span>{link.label}</span>
           </NavLink>

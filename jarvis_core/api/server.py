@@ -6,6 +6,9 @@ from jarvis_core.skills.loader import build_registry
 from jarvis_core.core.agent import JarvisAgent
 from jarvis_core.config.settings import WORKSPACE
 from fastapi.middleware.cors import CORSMiddleware
+from jarvis_core.jobs.global_manager import jobs
+from jarvis_core.events.ws_manager import ws_manager
+
 app = FastAPI(title="Jarvis 3 Milestone 2")
 
 app.add_middleware(
@@ -95,8 +98,39 @@ def dashboard_models():
         "running": registry.run("ollama.running"),
     }
 
+@app.post("/api/jobs/ollama/pull/{model_name}")
+def job_ollama_pull(model_name: str):
+    job = jobs.submit(
+        f"Pull Ollama model: {model_name}",
+        registry.run,
+        "ollama.pull",
+        name=model_name,
+    )
+
+    return job.to_dict()
+
 import asyncio
 from fastapi import WebSocket
+
+@app.get("/api/jobs")
+def list_jobs():
+    return jobs.all()
+
+
+@app.get("/api/jobs/{job_id}")
+def get_job(job_id: str):
+    job = jobs.get_dict(job_id)
+    if not job:
+        return {"error": "job not found"}
+    return job
+
+
+@app.post("/api/jobs/{job_id}/cancel")
+def cancel_job(job_id: str):
+    job = jobs.cancel(job_id)
+    if not job:
+        return {"error": "job not found"}
+    return job.to_dict()
 
 @app.websocket("/ws/live")
 async def websocket_live(websocket: WebSocket):
@@ -173,3 +207,15 @@ def ollama_direct_action(action: str, model_name: str):
 @app.get("/api/ollama/overview")
 def ollama_overview():
     return registry.run("ollama.overview")
+from fastapi import WebSocket
+
+@app.websocket("/ws/jobs")
+async def jobs_socket(ws: WebSocket):
+
+    await ws_manager.connect(ws)
+
+    try:
+        while True:
+            await ws.receive_text()
+    except Exception:
+        ws_manager.disconnect(ws)
