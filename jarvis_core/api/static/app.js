@@ -3,38 +3,58 @@ async function getJSON(url) {
   return await res.json();
 }
 
-function pretty(obj) {
-  return JSON.stringify(obj, null, 2);
+function setRing(id, value) {
+  const el = document.getElementById(id);
+  const v = Math.max(0, Math.min(100, Number(value || 0)));
+  el.parentElement.style.setProperty('--value', `${v}%`);
+  el.textContent = `${v.toFixed(0)}%`;
+}
+
+async function refreshLive() {
+  const data = await getJSON('/dashboard/live');
+
+  const sys = data.system;
+  const gpu = data.gpu;
+  const vramPct = gpu.memory_total_mb
+    ? (gpu.memory_used_mb / gpu.memory_total_mb) * 100
+    : 0;
+
+  setRing('cpuValue', sys.cpu_percent);
+  setRing('ramValue', sys.ram_percent);
+  setRing('gpuValue', gpu.util_percent);
+  setRing('vramValue', vramPct);
+
+  document.getElementById('gpuBox').textContent =
+`GPU: ${gpu.name}
+Load: ${gpu.util_percent}%
+VRAM: ${gpu.memory_used_mb} / ${gpu.memory_total_mb} MB
+Temp: ${gpu.temperature_c}°C
+Power: ${gpu.power_watts} W
+
+Jarvis:
+PID: ${data.jarvis.pid}
+Uptime: ${data.jarvis.uptime_minutes} min
+Memory: ${data.jarvis.memory_mb} MB`;
+
+  document.getElementById('dockerBox').textContent =
+`Running: ${data.docker.running} / ${data.docker.total}
+
+${data.docker.containers.map(c => `${c.status === 'running' ? '🟢' : '⚪'} ${c.name}`).join('\n')}`;
+}
+
+async function refreshActions() {
+  const data = await getJSON('/dashboard/jarvis');
+  document.getElementById('actionsBox').textContent =
+    data.recent_actions.map(a => `• ${a.action} (${a.duration_sec}s)`).join('\n') || 'No recent actions.';
 }
 
 async function refreshHealth() {
   try {
-    const data = await getJSON('/health');
+    await getJSON('/health');
     document.getElementById('health').textContent = 'Online';
   } catch {
     document.getElementById('health').textContent = 'Offline';
   }
-}
-
-async function refreshStatus() {
-  const res = await fetch('/chat', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({message: 'How healthy is my AI server?'})
-  });
-  const data = await res.json();
-  document.getElementById('statusBox').textContent =
-    data.response || pretty(data);
-}
-
-async function refreshSkills() {
-  const data = await getJSON('/skills');
-  document.getElementById('skillsBox').textContent = pretty(data);
-}
-
-async function refreshActions() {
-  const data = await getJSON('/actions');
-  document.getElementById('actionsBox').textContent = pretty(data);
 }
 
 function addMsg(role, text) {
@@ -61,7 +81,7 @@ async function sendChat() {
   });
 
   const data = await res.json();
-  addMsg('jarvis', data.response || pretty(data));
+  addMsg('jarvis', data.response || JSON.stringify(data, null, 2));
   refreshActions();
 }
 
@@ -70,7 +90,9 @@ document.getElementById('chatInput').addEventListener('keydown', e => {
 });
 
 refreshHealth();
-refreshStatus();
-refreshSkills();
+refreshLive();
 refreshActions();
+
 setInterval(refreshHealth, 10000);
+setInterval(refreshLive, 3000);
+setInterval(refreshActions, 8000);

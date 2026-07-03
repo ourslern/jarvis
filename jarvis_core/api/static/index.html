@@ -28,33 +28,54 @@
         <div id="health" class="pill">Checking...</div>
       </header>
 
-      <section class="grid">
-        <div class="card">
-          <h2>System Status</h2>
-          <pre id="statusBox">Loading...</pre>
-        </div>
-
-        <div class="card">
-          <h2>Skills</h2>
-          <pre id="skillsBox">Loading...</pre>
-        </div>
-
-        <div class="card wide">
-          <h2>Chat with Jarvis</h2>
-          <div id="chatLog" class="chat-log"></div>
-          <div class="chat-input">
-            <input id="chatInput" placeholder="Ask Jarvis something..." />
-            <button onclick="sendChat()">Send</button>
-          </div>
-        </div>
-
-        <div class="card wide">
-          <h2>Recent Actions</h2>
-          <pre id="actionsBox">Loading...</pre>
-        </div>
-      </section>
-    </main>
+      <section class="metric-grid">
+  <div class="metric-card">
+    <div class="metric-title">CPU</div>
+    <div class="ring"><span id="cpuValue">0%</span></div>
   </div>
+
+  <div class="metric-card">
+    <div class="metric-title">RAM</div>
+    <div class="ring"><span id="ramValue">0%</span></div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-title">GPU</div>
+    <div class="ring"><span id="gpuValue">0%</span></div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-title">VRAM</div>
+    <div class="ring"><span id="vramValue">0%</span></div>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <h2>GPU Details</h2>
+    <pre id="gpuBox">Loading...</pre>
+  </div>
+
+  <div class="card">
+    <h2>Docker</h2>
+    <pre id="dockerBox">Loading...</pre>
+  </div>
+
+  <div class="card wide">
+    <h2>Chat with Jarvis</h2>
+    <div id="chatLog" class="chat-log"></div>
+    <div class="chat-input">
+      <input id="chatInput" placeholder="Ask Jarvis something..." />
+      <button onclick="sendChat()">Send</button>
+    </div>
+  </div>
+
+  <div class="card wide">
+    <h2>Recent Actions</h2>
+    <pre id="actionsBox">Loading...</pre>
+  </div>
+</section>
+
 
   <script src="/static/app.js"></script>
 </body>
